@@ -70,12 +70,33 @@ regardless of scheduling. Cloud offload is therefore a *thermal necessity*, not
 merely a cost or latency optimisation — and the threshold is quantization
 dependent.
 
-### FP16
+### FP16 — a different regime, and confounded
 
 FP16 (3.7 GB) does not fit in 4 GB of VRAM and runs at a 23 %/77 % CPU/GPU
-split. It is a different, partly CPU-bound regime (~24 tok/s at 79 deg C) and is
-**not comparable** to the GPU-resident Q4 and Q8 results above. A clean FP16
-measurement requires a larger card.
+split. It behaves completely differently:
+
+| Quantity | FP16 (partly CPU-bound) |
+|---|---|
+| Throughput | 25.3 -> 24.6 tok/s (**2.9 % loss**) |
+| Temperature | 54.9 -> 81.5 deg C |
+| `tau_heat` / `tau_cool` | 103 s / 110 s |
+| `tau_cool / tau_heat` | **1.07** (symmetric) |
+| Minimum fleet size | N >= 2.1 |
+
+Throughput is nearly flat and the heat/cool asymmetry disappears. The likely
+explanation is that once a quarter of the work moves to the CPU, the GPU is no
+longer the bottleneck: it is driven well below its thermal envelope (81.5 vs
+88.8 deg C), so throttling barely affects end-to-end throughput.
+
+**This measurement is confounded and should not be reported as a quantization
+effect.** Two variables changed at once — numerical precision *and* the
+CPU/GPU split — and this experiment cannot separate them. Disentangling them
+requires a card with enough VRAM to hold FP16 entirely (e.g. 8 GB), which is
+pending.
+
+Taken cautiously, it suggests the thermal bound applies specifically to
+*GPU-bound* inference, and that the bound weakens when the accelerator is not
+the constraint.
 
 ## Repository layout
 
