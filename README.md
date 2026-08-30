@@ -19,37 +19,63 @@ made from a value that silently becomes wrong.
 
 ## Findings so far
 
-RTX 3050 Laptop (4 GB), Qwen2.5-1.5B-Instruct-Q4_K_M, Ollama, cold start
-(<60 °C), 15 min sustained load + 15 min idle, NVML telemetry at 20 Hz.
+RTX 3050 Laptop (4 GB), Qwen2.5-1.5B-Instruct, Ollama, cold start (<60 deg C),
+15 min sustained load + 15 min idle, NVML telemetry at 20 Hz. Both models are
+100 % GPU-resident.
 
-| Quantity | Value |
-|---|---|
-| Throughput | 116.8 -> 66.4 tok/s (**43.1 % loss**) |
-| Temperature | 61.6 -> 88.8 °C |
-| `tau_heat` (temperature) | 25 s |
-| `tau_cool` (temperature) | 105 s |
-| `tau_cool / tau_heat` | **4.16** |
-| `tau_heat` (throughput) | 239 s |
-| Minimum fleet size | **N >= 5.2 devices** |
+| Quantity | Q4_K_M | Q8_0 |
+|---|---|---|
+| Peak throughput (0-60 s) | **115.8** +/- 1.40 tok/s | **95.4** +/- 0.39 tok/s |
+| Steady throughput (>700 s) | **66.16** +/- 4.01 (n=90) | **66.77** +/- 4.05 (n=91) |
+| Throughput loss | 42.9 % | 30.0 % |
+| Temperature | 61.6 -> 88.8 deg C | 56.2 -> 88.4 deg C |
+| `tau_heat` (temperature) | 25 s | 30 s |
+| `tau_cool` (temperature) | 105 s | 101 s |
+| `tau_cool / tau_heat` | 4.16 | 3.36 |
+| `tau_heat` (throughput) | 239 s | 269 s |
+| Minimum fleet size | N >= 5.2 | N >= 4.4 |
 
-Two results follow.
+Three results follow.
 
-**1. Temperature is an information-free control signal.**
-Temperature equilibrates 9.5x faster than throughput degrades (25 s vs 239 s).
-The GPU sits at a flat ~88 °C, well below NVML's 97 °C slowdown threshold,
-while throughput continues to collapse for another four minutes. Any policy
-that controls on temperature is blind for the entire window in which the
-performance is lost. `SwThermalSlowdown` was active in 96.7 % of samples in the
-uncontrolled pilot run.
+**1. Quantization's throughput advantage is transient.**
+At cold start Q4 is 21.4 % faster than Q8. At thermal equilibrium the two are
+statistically indistinguishable (66.16 vs 66.77 tok/s, a 0.6 tok/s difference
+against a standard deviation of ~4.0 across ~90 requests each). Under sustained
+load the device converges to a thermally-limited throughput floor that is
+independent of quantization level: it delivers what its power and thermal
+envelope allow, regardless of the arithmetic cost per token.
 
-**2. A fleet-size bound on thermal rotation.**
+The methodological consequence is that **short-run benchmarks systematically
+overstate quantization speedup** — here by the entire effect, a 21 % advantage
+that decays to zero within roughly ten minutes. Q4 also heats faster
+(`tau_heat` 25 s vs 30 s) precisely because it does more work per unit time
+early on: it buys its speed by spending thermal headroom faster.
+
+**2. Temperature is an information-free control signal.**
+Temperature equilibrates 8.9-9.5x faster than throughput degrades (25-30 s vs
+239-269 s). The GPU sits at a flat ~88 deg C, well below NVML's 97 deg C
+slowdown threshold, while throughput continues to collapse for another four
+minutes. Any policy that controls on temperature is blind for the entire window
+in which the performance is lost. `SwThermalSlowdown` was active in 96.7 % of
+samples in the uncontrolled pilot run.
+
+**3. A fleet-size bound on thermal rotation.**
 Balancing heat in against heat out for an N-device rotation gives
 
-    N >= 1 + tau_cool / tau_heat  ~= 5.2 devices
+    N >= 1 + tau_cool / tau_heat
 
-Below this, rotating work between edge devices cannot reach thermal
-equilibrium and the fleet throttles regardless of scheduling. Cloud offload is
-therefore a *thermal necessity*, not merely a cost or latency optimisation.
+which is 5.2 devices for Q4 and 4.4 for Q8. Below this bound, rotating work
+between edge devices cannot reach thermal equilibrium and the fleet throttles
+regardless of scheduling. Cloud offload is therefore a *thermal necessity*, not
+merely a cost or latency optimisation — and the threshold is quantization
+dependent.
+
+### FP16
+
+FP16 (3.7 GB) does not fit in 4 GB of VRAM and runs at a 23 %/77 % CPU/GPU
+split. It is a different, partly CPU-bound regime (~24 tok/s at 79 deg C) and is
+**not comparable** to the GPU-resident Q4 and Q8 results above. A clean FP16
+measurement requires a larger card.
 
 ## Repository layout
 
