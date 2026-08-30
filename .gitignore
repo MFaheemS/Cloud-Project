@@ -2,3 +2,4 @@ venv/
 __pycache__/
 *.pyc
 /Cloud_Computing_100_Day_Research_Assignment_Detailed_Guide.docx
+docs/*.docx
