@@ -1,4 +1,4 @@
-# When Quantization Stops Paying: Thermal Limits on Sustained Edge LLM Inference
+# Thermally Mandated Offloading: Why Quantization Gains Vanish Under Sustained Edge LLM Inference
 
 Measurement harness, raw telemetry, and analysis for a study of sustained
 LLM inference on thermally-constrained consumer GPUs.
