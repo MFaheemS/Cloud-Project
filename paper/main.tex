@@ -1,0 +1,187 @@
+% Group G12 -- Cloud Computing 100-Day Research Assignment
+% Manuscript source. Sections follow Section 14 of the assignment guide.
+% If the instructor's Overleaf template uses a different class or section
+% order, copy the section bodies into the template and keep references.bib.
+
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+
+\title{When Quantization Stops Paying: Thermal Limits on Sustained Edge LLM Inference}
+\author{
+  Faheem \\ 23i-0728 \\ FAST-NUCES Islamabad
+  \and
+  Irtaza Kazmi \\ 23i-6001 \\ FAST-NUCES Islamabad
+}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Edge--cloud placement systems decide where large language model (LLM) inference
+runs using a throughput figure measured on a cool, idle device. On consumer GPUs
+that figure degrades under sustained load as the device throttles itself, and
+temperature, the signal such systems usually monitor, settles long before the
+degradation ends. In preliminary single-run measurements on an RTX~3050 laptop
+GPU, sustained throughput fell by up to 43\%, and the 21\% cold-start speed
+advantage of a 4-bit over an 8-bit quantized model disappeared at thermal
+equilibrium. This study characterises sustained performance across model sizes,
+quantization levels and two GPUs, tests the mechanism behind the loss of
+quantization advantage, builds a predictor of sustained throughput from a short
+measurement, and evaluates a placement policy driven by it.
+\textit{[Draft abstract for Cutoff~1; rewrite once full results are available.]}
+
+Reproducibility: The code and reproducibility materials for this study are
+publicly available at: \url{https://github.com/MFaheemS/Cloud-Project}
+\end{abstract}
+
+\section{Introduction}
+Running LLMs on local and edge devices is increasingly attractive for cost and
+privacy. Deciding \emph{where} a request should run---on the device or in the
+cloud---depends on an estimate of how fast the device is. That estimate is
+normally taken once, from a short benchmark on cool hardware.
+
+\section{Problem and Motivation}
+A consumer GPU running continuously heats up and reduces its own clock speed to
+protect itself. It keeps reporting a normal temperature and keeps working, but it
+does substantially less work than the benchmark suggested. A placement decision
+based on the cold figure can therefore become wrong within minutes, and nothing
+in the system detects it.
+
+Quantization, which shrinks a model so it needs less memory and arithmetic, is
+one of the main techniques that make edge inference practical. It is almost
+always evaluated in short runs, so any interaction between quantization and
+sustained thermal behaviour is invisible to current evaluations.
+
+\section{Research Questions and Objectives}
+\paragraph{Primary research question.} How does quantization level affect the
+throughput a consumer GPU can sustain under continuous LLM inference, and can
+steady-state performance be predicted from a short measurement well enough to
+make correct edge--cloud placement decisions?
+
+\paragraph{Objectives.}
+\begin{enumerate}
+  \item Characterise peak and sustained throughput, energy per token, and heating
+        and cooling behaviour across model sizes, quantization levels and two GPUs.
+  \item Explain the mechanism behind the loss of quantization advantage by
+        separating the effect of reduced clock speed from heat itself.
+  \item Build and validate a predictor of sustained throughput from a short
+        cold-start measurement.
+  \item Evaluate a placement policy driven by that predictor against policies
+        that assume constant performance or react to temperature.
+\end{enumerate}
+
+\section{Literature Review}
+% Cutoff 2: expand to ~15-20 papers, organised by theme, with a comparison
+% table (problem, method, dataset/setup, metrics, finding, gap).
+
+\paragraph{Edge measurement studies.} Sustained-load benchmarks on mobile, NPU and
+laptop GPU platforms confirm heavy throttling under continuous inference
+\cite{tummalapalli2026edge}, but test a single model at one quantization level,
+are measurement-only, and do not consider placement. Evaluations of quantized
+models on edge hardware report energy, accuracy and latency
+\cite{husom2025sustainable}, but not how those trade-offs change over a long
+session.
+
+\paragraph{Energy benchmarks.} Large cross-GPU energy studies
+\cite{fadelargerich2026wattcounts} characterise many models and architectures but
+use only 16-bit weights, list quantized models as future work, and measure
+steady state without a time axis.
+
+\paragraph{Thermal- and energy-aware management.} Thermal- and power-aware
+schedulers exist for datacentres \cite{stojkovic2025tapas}, relying on facility
+cooling and power-capping controls that consumer hardware does not expose.
+On-device energy managers \cite{zou2026enerinfer} tune a single device rather than
+deciding where work should run.
+
+\paragraph{Placement and precision.} Edge--cloud schedulers
+\cite{yang2024perllm} assign requests using performance estimates measured in
+advance, and dynamic-precision methods \cite{liu2025flexquant} switch quantization
+level for accuracy or resource targets without considering heat.
+
+\section{Research Gap}
+No existing work measures how quantization level changes a device's ability to
+sustain performance under continuous load, or connects that behaviour to the
+decision of where inference should run.
+
+\section{Methodology}
+\textit{[Written as planned work for Cutoff~1; convert to past tense after the
+experiments.]}
+
+\paragraph{Measurement protocol.} Each run cools the GPU to a defined cold start
+(below 60\,$^\circ$C), applies 15~minutes of continuous inference, then records
+15~minutes of idle
+recovery. Temperature, power, clock frequency and throttle status are sampled at
+20~Hz via NVML; throughput is recorded per request.
+
+\paragraph{Mechanism.} Key quantization comparisons are repeated with the GPU clock
+held at a low fixed frequency on a cool device, to separate reduced compute from
+heat.
+
+\paragraph{Predictor and policy.} A curve fitted to the first 60--90~s of each run
+predicts steady-state throughput and is validated against the full-length run.
+A placement policy using the predictor is compared with a constant-performance
+baseline and a temperature-triggered baseline.
+
+\section{Experimental Setup}
+\begin{table}[h]
+\centering
+\caption{Planned experimental matrix.}
+\begin{tabular}{ll}
+\toprule
+Factor & Levels \\
+\midrule
+Model size   & 0.5B, 1.5B, 3B parameters (Qwen2.5 family) \\
+Quantization & Q4\_K\_M, Q8\_0, FP16 \\
+Hardware     & RTX 3050 Laptop (4\,GB), RTX 4070 Laptop (8\,GB) \\
+Runtime      & Ollama, NVML via \texttt{nvidia-ml-py} \\
+Repetitions  & 5 per configuration \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Results}
+\textit{[Preliminary: single runs on the RTX~3050; to be replaced by repeated
+measurements.]}
+
+\begin{table}[h]
+\centering
+\caption{Preliminary peak and sustained throughput (RTX 3050 Laptop, single runs).}
+\begin{tabular}{lrrrr}
+\toprule
+Configuration & Peak (tok/s) & Sustained (tok/s) & Loss & Clock at steady state \\
+\midrule
+0.5B Q4 & 243.6 & 179.9 & 26.2\% & 1181 MHz \\
+1.5B Q4 & 115.8 &  66.2 & 42.9\% &  839 MHz \\
+1.5B Q8 &  95.4 &  66.8 & 30.0\% &  832 MHz \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Discussion}
+% To be written after full results.
+
+\section{Limitations}
+% Current evidence: single repetitions, one device, uncontrolled ambient
+% temperature; FP16 confounded by CPU offload on the 4 GB card.
+
+\section{Future Work}
+% To be written.
+
+\section{Conclusion}
+% To be written.
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\section*{Authors Profile}
+% Short biography of each author, to be written by the authors.
+
+\end{document}

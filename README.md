@@ -1,14 +1,29 @@
-# Thermally Mandated Offloading: Heat–Recovery Asymmetry as a Hard Bound on Edge LLM Serving
+# When Quantization Stops Paying: Thermal Limits on Sustained Edge LLM Inference
 
 Measurement harness, raw telemetry, and analysis for a study of sustained
 LLM inference on thermally-constrained consumer GPUs.
 
+Group G12, Cloud Computing 100-Day Research Assignment. Approved direction:
+Edge–Cloud Intelligence. Faheem (23i-0728, Primary Researcher) and
+Irtaza Kazmi (23i-6001, Co-Researcher).
+
 ## Research question
 
-Given measured heat-up and cool-down time constants of consumer GPUs under
-sustained LLM inference, what is the minimum edge fleet size at which local
-rotation can sustain throughput — and below that bound, what offload policy
-follows from those constants?
+How does quantization level affect the throughput a consumer GPU can sustain
+under continuous LLM inference, and can steady-state performance be predicted
+from a short measurement well enough to make correct edge–cloud placement
+decisions?
+
+Objectives:
+
+1. Characterise peak and sustained throughput, energy per token, and heating
+   and cooling behaviour across model sizes, quantization levels and two GPUs.
+2. Explain why the advantage of aggressive quantization shrinks under heat, by
+   separating reduced clock speed from heat itself.
+3. Build and validate a predictor of sustained throughput from a short
+   cold-start measurement.
+4. Evaluate a placement policy driven by that predictor against policies that
+   assume constant performance or react to temperature.
 
 ## Motivation
 
@@ -59,16 +74,31 @@ minutes. Any policy that controls on temperature is blind for the entire window
 in which the performance is lost. `SwThermalSlowdown` was active in 96.7 % of
 samples in the uncontrolled pilot run.
 
-**3. A fleet-size bound on thermal rotation.**
+**3. The floor is GPU-bound, not a serving artefact.**
+A control run with Qwen2.5-0.5B-Q4 (397 MB) peaks at 243.6 tok/s and sustains
+179.9 tok/s, far above the ~66 tok/s floor shared by both 1.5B variants. The
+floor therefore scales with the work done per token and is not a fixed
+per-token cost in the serving stack. The 0.5B run also holds ~1181 MHz at steady
+state against ~835 MHz for the 1.5B runs, so the throttle floor follows power
+draw rather than a fixed clock.
+
+A likely mechanism: Q4_K_M reads fewer bytes per token than Q8 but spends more
+arithmetic unpacking block-quantized weights. Throttling removes arithmetic
+capacity, so the compute-dependent advantage erodes first. This is a hypothesis
+to be tested (Objective 2), not yet a result.
+
+### Exploratory: a fleet-size heuristic (not a claim)
 Balancing heat in against heat out for an N-device rotation gives
 
     N >= 1 + tau_cool / tau_heat
 
-which is 5.2 devices for Q4 and 4.4 for Q8. Below this bound, rotating work
-between edge devices cannot reach thermal equilibrium and the fleet throttles
-regardless of scheduling. Cloud offload is therefore a *thermal necessity*, not
-merely a cost or latency optimisation — and the threshold is quantization
-dependent.
+which gives 5.2 devices for Q4 and 4.4 for Q8. This is a back-of-envelope
+heuristic, not a result. In a simple lumped thermal model heating and cooling
+share one time constant, so the measured asymmetry most likely reflects active
+control (fan ramp-up, power reduction under throttling) rather than a property
+of the silicon, and the two constants were measured towards different
+asymptotes. It cannot be validated with the hardware available and is kept here
+only as a direction for discussion.
 
 ### FP16 — a different regime, and confounded
 
@@ -101,10 +131,11 @@ the constraint.
 ## Repository layout
 
     src/thermal_tc.py    cold-start-controlled heat/cool characterisation harness
-    src/analyze_tc.py    time-constant fitting and fleet-bound derivation
+    src/analyze_tc.py    time-constant fitting and summary statistics
     experiments/raw/     raw telemetry and per-request CSVs
-    results/             derived tables and figures
-    docs/                assignment guide and notes
+    proposal/            Cutoff 1 proposal (PDF)
+    paper/               LaTeX manuscript source for Overleaf
+    CONTRIBUTIONS.md     contribution log
 
 ## Reproducing
 
@@ -135,11 +166,11 @@ Outputs `tc_<tag>_tel.csv` (telemetry) and `tc_<tag>_reqs.csv` (per-request).
 
 ## Limitations
 
-Results are from a single device, single quantization level, single run, at
-uncontrolled ambient temperature. The duty-cycle bound assumes a first-order
-lumped thermal model and has not yet been validated against a real multi-device
-alternation experiment. The quantization sweep (Q8, FP16) and a second GPU
-(RTX 4070, 8 GB) are in progress.
+All runs so far are single repetitions on one device (RTX 3050 Laptop, 4 GB)
+at uncontrolled ambient temperature. Planned: five repetitions per
+configuration, a second GPU (RTX 4070 Laptop, 8 GB, which also allows a clean
+FP16 run), a 3B model, recorded ambient temperature, and clock-locked runs to
+test the mechanism.
 
 ## Status
 
