@@ -1,0 +1,401 @@
+<title>Paper Build Specification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+  :root{
+    --ground:#FBFBFC; --raise:#FFFFFF; --ink:#1A1D23; --muted:#5C6370;
+    --faint:#8A909C; --rule:#E2E5EA; --rule-soft:#EDEFF3;
+    --ember:#B4541E; --ember-soft:#FBF0E9; --good:#2F6B4F;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#14161A; --raise:#1A1D21; --ink:#E8EAED; --muted:#9AA0AC;
+      --faint:#767D8A; --rule:#282C33; --rule-soft:#21252B;
+      --ember:#E28A57; --ember-soft:#2A1E17; --good:#7CBF9B;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#14161A; --raise:#1A1D21; --ink:#E8EAED; --muted:#9AA0AC;
+    --faint:#767D8A; --rule:#282C33; --rule-soft:#21252B;
+    --ember:#E28A57; --ember-soft:#2A1E17; --good:#7CBF9B;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--ground);color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+    font-size:16px;line-height:1.6;margin:0;padding-inline:24px;padding-block:0;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:54rem;margin:0 auto;padding-block:56px 96px}
+  .eyebrow{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 18px}
+  h1{font-family:"Source Serif 4",Georgia,serif;font-weight:600;
+    font-size:clamp(28px,4.8vw,40px);line-height:1.15;letter-spacing:-.015em;
+    text-wrap:balance;margin:0 0 14px}
+  .standfirst{font-size:17px;color:var(--muted);margin:0 0 40px;max-width:40rem;text-wrap:pretty}
+  section{margin:0 0 40px}
+  h2{font-family:"Source Serif 4",Georgia,serif;font-weight:600;font-size:21px;
+    line-height:1.25;letter-spacing:-.01em;margin:0 0 14px;padding-top:22px;
+    border-top:1px solid var(--rule);display:flex;gap:14px;align-items:baseline;text-wrap:balance}
+  h2 .num{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:400;
+    color:var(--ember);flex:none;padding-top:2px}
+  h3{font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+    color:var(--muted);margin:26px 0 8px}
+  p{margin:0 0 13px;max-width:44rem;text-wrap:pretty}
+  a{color:var(--ember);text-underline-offset:2px}
+  ul,ol{margin:0 0 13px;padding-left:20px;max-width:44rem}
+  li{margin-bottom:6px}
+  li::marker{color:var(--faint)}
+  .scroll{overflow-x:auto;margin:0 0 16px;border:1px solid var(--rule)}
+  table{border-collapse:collapse;width:100%;font-size:13px;min-width:30rem}
+  th,td{padding:7px 11px;text-align:left;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+  thead th{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--faint);font-weight:400;
+    border-bottom:1px solid var(--rule);background:var(--raise)}
+  tbody tr:last-child td{border-bottom:none}
+  td.n,th.n{text-align:right;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+  td.key{font-family:"IBM Plex Mono",monospace;font-size:12px}
+  .done{color:var(--good);font-weight:500}
+  .todo{color:var(--ember);font-weight:500}
+  code{font-family:"IBM Plex Mono",monospace;font-size:.88em;background:var(--rule-soft);
+    padding:1px 5px;border-radius:2px}
+  .block{font-family:"IBM Plex Mono",monospace;font-size:12px;line-height:1.65;
+    background:var(--raise);border:1px solid var(--rule);padding:13px 15px;margin:0 0 16px;
+    overflow-x:auto;white-space:pre-wrap;word-break:break-word}
+  .pull{border-left:2px solid var(--ember);background:var(--ember-soft);padding:13px 17px;
+    margin:0 0 18px;max-width:44rem}
+  .pull p{margin:0;font-size:15px}
+  .note{font-size:13px;color:var(--muted);max-width:44rem}
+  footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--rule);
+    font-size:13px;color:var(--faint)}
+  @media (max-width:520px){
+    body{padding-inline:18px}.wrap{padding-block:40px 64px}h2{flex-direction:column;gap:4px}
+  }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">Group G12 &middot; For Irtaza Kazmi (23i-6001)</p>
+  <h1>Paper Build Specification</h1>
+  <p class="standfirst">Exactly what the Overleaf manuscript must contain: every section, every number, every reference. Nothing here needs to be looked up elsewhere.</p>
+
+  <section>
+    <h2><span class="num">00</span> Paper identity</h2>
+    <div class="scroll"><table><tbody>
+      <tr><td class="key">Title</td><td>Thermally Mandated Offloading: Why Quantization Gains Vanish Under Sustained Edge LLM Inference</td></tr>
+      <tr><td class="key">Authors</td><td>Faheem (23i-0728), Irtaza Kazmi (23i-6001) &mdash; FAST-NUCES Islamabad</td></tr>
+      <tr><td class="key">Group / area</td><td>G12 &middot; Edge&ndash;Cloud Intelligence</td></tr>
+      <tr><td class="key">Overleaf name</td><td><code>[Grp12_23i-0728_23i-6001_thermally_mandated_offloading]</code></td></tr>
+      <tr><td class="key">Instructor access</td><td><code>basharat.hussain.v@isb.nu.edu.pk</code> as Editor</td></tr>
+      <tr><td class="key">Repository</td><td><code>github.com/MFaheemS/Cloud-Project</code></td></tr>
+      <tr><td class="key">Source files</td><td><code>paper/main.tex</code>, <code>paper/references.bib</code> &mdash; upload both to Overleaf</td></tr>
+    </tbody></table></div>
+    <p class="note">If the Overleaf project was created from the instructor's template, do not overwrite its <code>main.tex</code>. Paste the section bodies into the template's matching sections and upload <code>references.bib</code> only.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">01</span> Section structure and status</h2>
+    <p>This is the required order (Section 14 of the assignment guide). Word counts are what is already in <code>paper/main.tex</code>.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>#</th><th>Section</th><th class="n">Words</th><th>Status</th><th>Owner</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td>Abstract</td><td class="n">~130</td><td class="todo">placeholder &mdash; rewrite last</td><td>Faheem</td></tr>
+        <tr><td class="n">2</td><td>Introduction</td><td class="n">48</td><td class="done">written, could grow</td><td>Faheem</td></tr>
+        <tr><td class="n">3</td><td>Problem and Motivation</td><td class="n">101</td><td class="done">written</td><td>Faheem</td></tr>
+        <tr><td class="n">4</td><td>Research Questions and Objectives</td><td class="n">116</td><td class="done">written</td><td>Faheem</td></tr>
+        <tr><td class="n">5</td><td><strong>Literature Review</strong></td><td class="n">158</td><td class="todo"><strong>expand to 900&ndash;1,200</strong></td><td><strong>Irtaza</strong></td></tr>
+        <tr><td class="n">6</td><td><strong>Research Gap</strong></td><td class="n">29</td><td class="todo"><strong>expand to ~200</strong></td><td><strong>Irtaza</strong></td></tr>
+        <tr><td class="n">7</td><td>Methodology</td><td class="n">731</td><td class="done">complete &mdash; do not edit</td><td>Faheem</td></tr>
+        <tr><td class="n">8</td><td>Experimental Setup</td><td class="n">142</td><td class="done">complete &mdash; do not edit</td><td>Faheem</td></tr>
+        <tr><td class="n">9</td><td>Results</td><td class="n">447</td><td class="done">complete &mdash; do not edit</td><td>Faheem</td></tr>
+        <tr><td class="n">10</td><td>Discussion</td><td class="n">0</td><td class="todo">empty heading</td><td>together</td></tr>
+        <tr><td class="n">11</td><td>Limitations</td><td class="n">0</td><td class="todo">empty heading</td><td>together</td></tr>
+        <tr><td class="n">12</td><td>Future Work</td><td class="n">0</td><td class="todo">empty heading</td><td>together</td></tr>
+        <tr><td class="n">13</td><td>Conclusion</td><td class="n">0</td><td class="todo">empty heading</td><td>together</td></tr>
+        <tr><td class="n">14</td><td>References</td><td>&mdash;</td><td class="todo">grows with &sect;05</td><td><strong>Irtaza</strong></td></tr>
+        <tr><td class="n">15</td><td>Authors Profile</td><td class="n">0</td><td class="todo">short bio each</td><td>both</td></tr>
+      </tbody>
+    </table></div>
+    <div class="pull"><p>Your edits are confined to <strong>Literature Review</strong>, <strong>Research Gap</strong> and <strong>references.bib</strong>. Sections 7&ndash;9 are finished and tied to the numbers below; changing them breaks the cross-references.</p></div>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> Everything the paper claims &mdash; all results</h2>
+    <p>These are every measured number in the project. You will need them to write the gap, and to check nothing you write contradicts them.</p>
+
+    <h3>A. Baseline reproduction (vs Husom et al., Table 8)</h3>
+    <p>200 prompts &times; 5 repeats = 1,000 generations per cell, scored with the authors' own scripts.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Model</th><th>Dataset</th><th class="n">Paper</th><th class="n">Ours</th><th class="n">Diff</th><th class="n">p</th></tr></thead>
+      <tbody>
+        <tr><td class="key">qwen2.5-0.5b-q4_K_M</td><td>CommonsenseQA</td><td class="n">0.32</td><td class="n">0.291</td><td class="n">&minus;0.029</td><td class="n">0.420</td></tr>
+        <tr><td class="key">qwen2.5-1.5b-q4_K_M</td><td>CommonsenseQA</td><td class="n">0.62</td><td class="n">0.593</td><td class="n">&minus;0.027</td><td class="n">0.474</td></tr>
+        <tr><td class="key">qwen2.5-0.5b-q4_K_M</td><td>TruthfulQA</td><td class="n">0.26</td><td class="n">0.275</td><td class="n">+0.015</td><td class="n">0.660</td></tr>
+        <tr><td class="key">qwen2.5-1.5b-q4_K_M</td><td>TruthfulQA</td><td class="n">0.24</td><td class="n">0.249</td><td class="n">+0.009</td><td class="n">0.786</td></tr>
+      </tbody>
+    </table></div>
+    <p>All four consistent; two-proportion z-test, no significant difference.</p>
+
+    <h3>B. New measurements the paper does not contain</h3>
+    <p>Husom et al. report no q8_0 or fp16 row for the 1.5B model: neither fits on their 4&nbsp;GB Raspberry Pi.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Model</th><th class="n">CommonsenseQA</th><th class="n">TruthfulQA</th></tr></thead>
+      <tbody>
+        <tr><td class="key">qwen2.5-1.5b-q4_K_M</td><td class="n">0.593</td><td class="n">0.249</td></tr>
+        <tr><td class="key">qwen2.5-1.5b-q8_0</td><td class="n">0.698</td><td class="n">0.239</td></tr>
+        <tr><td class="key">qwen2.5-1.5b-fp16</td><td class="n">0.705</td><td class="n">0.245</td></tr>
+      </tbody>
+    </table></div>
+    <p>CommonsenseQA gains <strong>10.5 points</strong> from q4 to q8, then plateaus (+0.7 to fp16). TruthfulQA is flat, so the effect is task-dependent.</p>
+
+    <h3>C. Sustained-load behaviour (RTX 3050, 15 min continuous)</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>Configuration</th><th class="n">Peak tok/s</th><th class="n">Sustained tok/s</th><th class="n">Loss</th><th class="n">Steady clock</th></tr></thead>
+      <tbody>
+        <tr><td class="key">0.5B Q4</td><td class="n">243.6</td><td class="n">179.9</td><td class="n">26.2%</td><td class="n">1181 MHz</td></tr>
+        <tr><td class="key">1.5B Q4</td><td class="n">115.8</td><td class="n">66.2</td><td class="n">42.9%</td><td class="n">839 MHz</td></tr>
+        <tr><td class="key">1.5B Q8</td><td class="n">95.4</td><td class="n">66.8</td><td class="n">30.0%</td><td class="n">832 MHz</td></tr>
+        <tr><td class="key">1.5B FP16 (CPU-offloaded)</td><td class="n">25.3</td><td class="n">24.6</td><td class="n">2.9%</td><td>&mdash;</td></tr>
+      </tbody>
+    </table></div>
+    <p><strong>Key finding:</strong> Q4 leads Q8 by 21% at cold start (115.8 vs 95.4) but they converge to the same floor (66.2 vs 66.8). The speed advantage of aggressive quantization does not survive sustained load; its accuracy cost does.</p>
+
+    <h3>D. Thermal time constants</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>Quantity</th><th class="n">1.5B Q4</th><th class="n">1.5B Q8</th></tr></thead>
+      <tbody>
+        <tr><td>Temperature range under load</td><td class="n">61.6 &rarr; 88.8 &deg;C</td><td class="n">56.2 &rarr; 88.4 &deg;C</td></tr>
+        <tr><td><code>tau_heat</code> (temperature)</td><td class="n">25 s</td><td class="n">30 s</td></tr>
+        <tr><td><code>tau_cool</code> (temperature)</td><td class="n">105 s</td><td class="n">101 s</td></tr>
+        <tr><td><code>tau_heat</code> (throughput)</td><td class="n">239 s</td><td class="n">269 s</td></tr>
+        <tr><td>Temperature saturates faster than throughput by</td><td class="n">9.5&times;</td><td class="n">8.9&times;</td></tr>
+      </tbody>
+    </table></div>
+    <p><strong>Second key finding:</strong> temperature reaches equilibrium roughly nine times faster than throughput degrades. The device looks thermally stable for the entire period in which most performance is lost, so temperature is a useless control signal. <code>SwThermalSlowdown</code> was active in 96.7% of telemetry samples.</p>
+
+    <h3>E. Proposed estimator and ablation</h3>
+    <p>The method fits <code>tok/s(t) = a + b&middot;exp(&minus;t/tau)</code> to a measurement window and reports the asymptote <code>a</code> instead of the window mean.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Arm</th><th>What it does</th><th class="n">MAPE</th><th class="n">Worst</th><th class="n">Cost</th></tr></thead>
+      <tbody>
+        <tr><td class="key">baseline</td><td>mean of first 60 s</td><td class="n">51.1%</td><td class="n">75.0%</td><td class="n">60 s</td></tr>
+        <tr><td class="key">+A</td><td>measure 300 s, last-60 s mean</td><td class="n">18.1%</td><td class="n">27.7%</td><td class="n">300 s</td></tr>
+        <tr><td class="key">+B</td><td>extrapolate from first 60 s</td><td class="n">17.9%</td><td class="n">39.2%</td><td class="n">60 s</td></tr>
+        <tr><td class="key">+A+B</td><td>extrapolate from first 300 s</td><td class="n">10.5%</td><td class="n">23.3%</td><td class="n">300 s</td></tr>
+      </tbody>
+    </table></div>
+    <p>B alone matches A's accuracy at one-fifth the measurement cost, so the gain comes from the model rather than from measuring longer.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Config</th><th class="n">Actual</th><th class="n">baseline</th><th class="n">+A</th><th class="n">+B</th><th class="n">+A+B</th></tr></thead>
+      <tbody>
+        <tr><td class="key">0.5b-q4</td><td class="n">179.9</td><td class="n">243.6</td><td class="n">188.8</td><td class="n">175.4</td><td class="n">179.9</td></tr>
+        <tr><td class="key">1.5b-q4</td><td class="n">66.2</td><td class="n">115.8</td><td class="n">84.5</td><td class="n">58.3</td><td class="n">81.6</td></tr>
+        <tr><td class="key">1.5b-q8</td><td class="n">66.8</td><td class="n">95.4</td><td class="n">81.2</td><td class="n">93.0</td><td class="n">61.3</td></tr>
+        <tr><td class="key">1.5b-fp16</td><td class="n">24.6</td><td class="n">25.3</td><td class="n">22.1</td><td class="n">24.7</td><td class="n">17.8</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>F. Headroom analysis (how much room is left)</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>Window (s)</th><th class="n">30</th><th class="n">45</th><th class="n">60</th><th class="n">90</th><th class="n">120</th><th class="n">180</th><th class="n">240</th><th class="n">300</th><th class="n">450</th><th class="n">600</th></tr></thead>
+      <tbody><tr><td class="key">MAPE %</td><td class="n">49.1</td><td class="n">45.2</td><td class="n">17.9</td><td class="n">94.9</td><td class="n">112.9</td><td class="n">38.4</td><td class="n">19.9</td><td class="n">10.5</td><td class="n">13.1</td><td class="n">11.2</td></tr></tbody>
+    </table></div>
+    <ul>
+      <li>Error is <strong>non-monotonic</strong>; at 90&ndash;120 s the estimator is worse than the baseline because the unconstrained fit returns physically impossible negative asymptotes (&minus;42.9 and &minus;61.4 tok/s).</li>
+      <li><strong>Oracle</strong> (same form fitted to the full run) reaches 3.8% mean error vs 10.5% deployed &rarr; <strong>6.7 points recoverable</strong>.</li>
+      <li><strong>Double-exponential</strong> fits better on all three runs; worst config improves 6.7% &rarr; 3.6%. Power-law is far worse.</li>
+      <li><strong>Physical constraints</strong> (0 &lt; a &le; min observed, b &ge; 0) help but do not fix it: mean across windows 41.3% &rarr; 31.9%, worst 192.8% &rarr; 100.0%.</li>
+    </ul>
+
+    <h3>G. Environment (already in Experimental Setup)</h3>
+    <p class="block">Device     NVIDIA RTX 3050 Laptop GPU, 4 GB, driver 581.83
+Host       Windows 11 build 26200, Python 3.13.5
+Serving    Ollama 0.24.0 (llama.cpp, GGUF)
+Telemetry  NVML via nvidia-ml-py, 20 Hz
+Models     Qwen2.5 0.5B / 1.5B Instruct; Q4_K_M, Q8_0, FP16
+Datasets   CommonsenseQA 200, TruthfulQA MC 200
+Protocol   --repeat 5, temperature 0; 15 min load + 15 min recovery, cold start <60 C
+Upstream   MELODI d55dae9, data repo c11fe13</p>
+
+    <h3>H. Reproducibility problems found in the baseline's code</h3>
+    <ol>
+      <li>No requirements file; <code>scikit-learn</code>, <code>rouge_score</code>, <code>python-Levenshtein</code>, <code>nltk</code> undocumented.</li>
+      <li><code>signal.SIGALRM</code> is Unix-only &mdash; crashes on Windows.</li>
+      <li>Printing raw model output crashes under cp1252 when a model emits CJK text; one run died at 501/1000.</li>
+      <li><strong>Output opens in append mode</strong>, so a re-run silently concatenates. Produced a 1,501-line file that the evaluator scored without complaint.</li>
+      <li>Energy measured with an external hardware meter on a Pi &mdash; not comparable to our NVML GPU sampling.</li>
+      <li>Model tags unpinned, so exact weights cannot be guaranteed.</li>
+    </ol>
+    <p class="note">Items 2&ndash;4 mean the artifacts have never been run on Windows. Item 4 is the serious one: results that look valid and are silently wrong.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">03</span> Literature Review &mdash; full specification</h2>
+    <p>Target <strong>900&ndash;1,200 words</strong> across four themed subsections, plus the comparison table. All 19 references are already in <code>paper/references.bib</code>, verified against the arXiv API and Crossref. <strong>You do not need to find more papers.</strong></p>
+    <div class="pull"><p>Not a list of summaries. Each subsection groups papers by what they share, then states what they collectively miss. The missing things become the Research Gap, so the gap is proven rather than asserted.</p></div>
+
+    <h3>5.1 Edge LLM measurement studies &mdash; ~250 words</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>Cite</th><th>What it does</th><th>Limitation to draw out</th></tr></thead>
+      <tbody>
+        <tr><td class="key">tummalapalli2026edge</td><td>Sustained-load benchmark of Qwen2.5-1.5B Q4 on Pi5+NPU, two phones, RTX 4050 laptop</td><td>one model at one quantization level; measurement only, proposes no policy</td></tr>
+        <tr><td class="key">renney2026cloudedge</td><td>Benchmarks LLM inference on hardware-accelerated single-board computers; reports throughput density and energy per million tokens</td><td>short benchmark runs; no sustained or thermal axis</td></tr>
+        <tr><td class="key">taherin2026hydra</td><td>Phase-aware characterisation across edge SoC generations, backends and quantization levels</td><td>characterisation only; no estimator or deployment policy</td></tr>
+        <tr><td class="key">xiao2024pockets</td><td>Performance study of LLMs on commodity mobile devices</td><td>mobile only; quantization&ndash;thermal interaction not isolated</td></tr>
+      </tbody>
+    </table></div>
+    <p><strong>Closing sentence must say:</strong> these studies measure devices in a cold or briefly warmed state, and none reports whether the figure they publish is sustainable.</p>
+
+    <h3>5.2 Energy and quantization trade-offs &mdash; ~300 words</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>Cite</th><th>What it does</th><th>Limitation to draw out</th></tr></thead>
+      <tbody>
+        <tr><td class="key">husom2025sustainable</td><td><strong>Our baseline.</strong> 28 quantized Ollama models on a Raspberry Pi 4 (4&nbsp;GB), five datasets, hardware power meter</td><td>short runs; no sustained load; cannot host 1.5B above q4 on 4&nbsp;GB</td></tr>
+        <tr><td class="key">fadelargerich2026wattcounts</td><td>Energy benchmark, 50 LLMs across 10 GPUs, batch and server scenarios</td><td>FP16 only (quantization named as future work); steady state, no time axis</td></tr>
+        <tr><td class="key">stuhlmann2025bench360</td><td>Local LLM benchmark across backends, quantization formats, tasks and scenarios</td><td>configs assume 24&nbsp;GB VRAM; no sustained scenario; no GGUF backend, so it cannot run on real consumer GPUs</td></tr>
+        <tr><td class="key">fadelargerich2026wattgpu</td><td>Predicts inference power and latency on unseen GPUs and LLMs</td><td>predicts across <em>hardware</em>, not across <em>time under load</em></td></tr>
+        <tr><td class="key">liu2026energytotoken</td><td>Position paper: inference should be evaluated as energy-to-token production</td><td>argues for better metrics but specifies no sustained-load protocol</td></tr>
+        <tr><td class="key">liu2025flexquant</td><td>Dynamic precision switching driven by perplexity and KL divergence</td><td>switches on output-quality signals, never on thermal state</td></tr>
+      </tbody>
+    </table></div>
+    <p><strong>Closing sentence must say:</strong> quantization is evaluated for speed, energy and accuracy, always assuming the measured rate is the steady-state rate; none verifies that assumption.</p>
+    <p class="note">Use <code>fadelargerich2026wattgpu</code> to position our estimator: both predict, but along different axes. Say so explicitly.</p>
+
+    <h3>5.3 Thermal and power-aware management &mdash; ~300 words</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>Cite</th><th>What it does</th><th>Limitation to draw out</th></tr></thead>
+      <tbody>
+        <tr><td class="key">stojkovic2025tapas</td><td>Thermal- and power-aware scheduling for LLM inference in cloud datacentres</td><td>needs facility cooling and power-capping controls consumer hardware does not expose</td></tr>
+        <tr><td class="key">liu2025greenllm</td><td>SLO-aware dynamic frequency scaling, separate control for prefill and decode</td><td>datacentre GPUs; requires direct frequency control</td></tr>
+        <tr><td class="key">zou2026enerinfer</td><td>Energy-aware on-device inference with DVFS on mobile-class hardware</td><td>single device; no quantization ladder; no placement decision</td></tr>
+        <tr><td class="key">lu2026therme</td><td><strong>Closest related work.</strong> Predictive management of shared thermal headroom for sustained LLM inference on edge SoCs, on vLLM</td><td>predicts <em>temperature headroom</em>, not sustained throughput; no quantization axis; no placement &mdash; see &sect;06</td></tr>
+        <tr><td class="key">benoitcattin2020thermal</td><td>Long-term CNN inference on a Raspberry Pi 4B under thermal throttling, with and without active cooling</td><td>CNNs, not LLMs; CPU only &mdash; but establishes the phenomenon predates LLM serving</td></tr>
+      </tbody>
+    </table></div>
+    <p><strong>Closing sentence must say:</strong> thermal-aware systems either target datacentres with control knobs consumer hardware lacks, or manage temperature at runtime; none asks whether the <em>published performance figure</em> for a configuration is achievable under sustained load.</p>
+
+    <h3>5.4 Edge&ndash;cloud placement and offloading &mdash; ~250 words</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>Cite</th><th>What it does</th><th>Limitation to draw out</th></tr></thead>
+      <tbody>
+        <tr><td class="key">yang2024perllm</td><td>Personalised inference scheduling with edge&ndash;cloud collaboration</td><td>decides from a service rate measured in advance</td></tr>
+        <tr><td class="key">younesi2025splitwise</td><td>Collaborative edge&ndash;cloud inference, splitting adaptively with Lyapunov-assisted DRL as bandwidth varies</td><td>adapts to <em>network</em> variation; treats per-device compute capability as stable</td></tr>
+        <tr><td class="key">yang2025moaoff</td><td>Modality-aware offloading for multimodal LLM inference</td><td>offloads on modality and workload, never on device condition</td></tr>
+        <tr><td class="key">akgul2025cosense</td><td>Cost- and uncertainty-aware cloud&ndash;edge cooperation</td><td>optimises cost and uncertainty; device throughput assumed fixed</td></tr>
+      </tbody>
+    </table></div>
+    <p><strong>Closing sentence must say:</strong> every placement system assumes a fixed per-device service rate, and our measurements show that rate is wrong by up to 75&nbsp;% within minutes.</p>
+    <p class="note"><code>akgul2025cosense</code>: confirm this is a credible paper before citing. If not, drop it &mdash; the subsection stands on the other three.</p>
+
+    <h3>Comparison table &mdash; include in the paper</h3>
+    <p>One row per paper, same columns as above plus Metrics. Build it before writing prose, then write each subsection by reading down the <strong>Limitation</strong> column. Numbers taken from abstracts must be checked in the paper itself before they go in the table.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Research Gap &mdash; full specification</h2>
+    <p>Target ~200 words. Four points, each tied to a measurement from &sect;02, then one closing claim.</p>
+    <ol>
+      <li><strong>No sustained-load dimension.</strong> Studies in 5.1&ndash;5.2 measure short runs. Our data: 43&nbsp;% throughput loss over 15 minutes, and Q4's 21&nbsp;% advantage over Q8 disappears entirely at equilibrium.</li>
+      <li><strong>Temperature carries no information during the loss.</strong> It saturates ~9&times; faster than throughput degrades (25&nbsp;s vs 239&nbsp;s), so systems in 5.3 that monitor temperature are blind through the window where performance is lost.</li>
+      <li><strong>Placement uses stale rates.</strong> Systems in 5.4 decide from a pre-measured service rate; ours is wrong by up to 75&nbsp;%.</li>
+      <li><strong>A hardware ceiling in the baseline.</strong> Husom et al. could not host 1.5B above q4 on a 4&nbsp;GB Pi, so their guidance for that size is incomplete &mdash; and the unmeasured region contains a 10.5-point accuracy gain.</li>
+    </ol>
+    <p><strong>Closing claim:</strong> no existing work measures how quantization level affects a device's ability to <em>sustain</em> performance, nor connects that to the placement decision.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> All 19 references</h2>
+    <p>Every entry below is in <code>paper/references.bib</code> and was verified on 2026-10-10 against the arXiv API or Crossref: title, full author list, year, DOI. Cite with <code>\cite{key}</code>.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>BibTeX key</th><th>Reference</th><th class="n">Theme</th></tr></thead>
+      <tbody>
+        <tr><td class="key">husom2025sustainable</td><td>Husom, Goknil, Astekin, Shar, K&aring;sen, Sen, Mithassel, Soylu. Sustainable LLM Inference for Edge AI. <em>ACM TIOT</em> 6(4), 2025. doi:10.1145/3767742 <strong>&larr; baseline</strong></td><td class="n">5.2</td></tr>
+        <tr><td class="key">tummalapalli2026edge</td><td>Tummalapalli, Arayakandy, Pal, Kundan. LLM Inference at the Edge. arXiv:2603.23640, 2026</td><td class="n">5.1</td></tr>
+        <tr><td class="key">renney2026cloudedge</td><td>Renney, Trad, Mattarock, Evetts, Wood. Cloud to Edge: Benchmarking LLM Inference on Hardware-Accelerated Single-Board Computers. arXiv:2604.24785, 2026</td><td class="n">5.1</td></tr>
+        <tr><td class="key">taherin2026hydra</td><td>Taherin, Taghipour Anvari, Amante, Chen, Noroian, Feric, Bohm Agostini, Zhao, Cano, Ren, Wang, Kaeli. Hydra: Phase-Aware Workload Characterization of LLM Inference. arXiv:2608.25053, 2026</td><td class="n">5.1</td></tr>
+        <tr><td class="key">xiao2024pockets</td><td>Xiao, Huang, Chen, Tian. Understanding Large Language Models in Your Pockets. arXiv:2410.03613, 2024</td><td class="n">5.1</td></tr>
+        <tr><td class="key">fadelargerich2026wattcounts</td><td>Fadel Argerich, F&uuml;rst, Pati&ntilde;o-Mart&iacute;nez. Watt Counts. arXiv:2604.09048, 2026</td><td class="n">5.2</td></tr>
+        <tr><td class="key">stuhlmann2025bench360</td><td>Stuhlmann, Fadel Argerich, F&uuml;rst. Bench360: Benchmarking Local LLM Inference from 360 Degrees. arXiv:2511.16682, 2025</td><td class="n">5.2</td></tr>
+        <tr><td class="key">fadelargerich2026wattgpu</td><td>Fadel Argerich, F&uuml;rst, Pati&ntilde;o-Mart&iacute;nez. WattGPU: Predicting Inference Power and Latency on Unseen GPUs and LLMs. arXiv:2607.02391, 2026</td><td class="n">5.2</td></tr>
+        <tr><td class="key">liu2026energytotoken</td><td>Liu, Yuan, Tang, Dong, Zhao, Wang, Li, Chu. Position: LLM Inference Should Be Evaluated as Energy-to-Token Production. arXiv:2605.11733, 2026</td><td class="n">5.2</td></tr>
+        <tr><td class="key">liu2025flexquant</td><td>Liu, Wang, Xia, Zhao, Zhao, Li, Liu, Jiang, Guan. FlexQuant. arXiv:2506.12024, 2025</td><td class="n">5.2</td></tr>
+        <tr><td class="key">stojkovic2025tapas</td><td>Stojkovic, Zhang, Goiri, Choukse, Qiu, Fonseca, Torrellas, Bianchini. TAPAS. ASPLOS '25. doi:10.1145/3676641.3716025</td><td class="n">5.3</td></tr>
+        <tr><td class="key">liu2025greenllm</td><td>Liu, Huang, Zapater, Atienza. GreenLLM: SLO-Aware Dynamic Frequency Scaling. arXiv:2508.16449, 2025</td><td class="n">5.3</td></tr>
+        <tr><td class="key">zou2026enerinfer</td><td>Zou, Liu, Sun, Mascherin, Roy, Liu, Peng, Jia, Chen. EnerInfer. arXiv:2606.23001, 2026</td><td class="n">5.3</td></tr>
+        <tr><td class="key">lu2026therme</td><td>Lu, Wang, Liu. ThermE: Predictive Management of Shared Thermal Headroom for Sustained LLM Inference on Thermally Constrained Edge SoCs. arXiv:2610.00267, 2026 <strong>&larr; closest work</strong></td><td class="n">5.3</td></tr>
+        <tr><td class="key">benoitcattin2020thermal</td><td>Benoit-Cattin, Velasco-Montero, Fern&aacute;ndez-Berni. Impact of Thermal Throttling on Long-Term Visual Inference in a CPU-based Edge Device. arXiv:2010.06291, 2020</td><td class="n">5.3</td></tr>
+        <tr><td class="key">yang2024perllm</td><td>Yang, Yang, Zhao, Guo, He, Ji. PerLLM. arXiv:2405.14636, 2024</td><td class="n">5.4</td></tr>
+        <tr><td class="key">younesi2025splitwise</td><td>Younesi, Shabrang Maryan, Oustad, Najafabadi Samani, Ansari, Fahringer. Splitwise. 2025. doi:10.1145/3773274.3774267</td><td class="n">5.4</td></tr>
+        <tr><td class="key">yang2025moaoff</td><td>Yang, Guo, Hu, Zhao, Zhang, Zhao, Ji. MoA-Off. arXiv:2509.16995, 2025</td><td class="n">5.4</td></tr>
+        <tr><td class="key">akgul2025cosense</td><td>Akgul, Eplik, Rojas, Abdullah, van der Merwe. CoSense-LLM. arXiv:2510.19670, 2025 <em>(verify credibility)</em></td><td class="n">5.4</td></tr>
+      </tbody>
+    </table></div>
+    <h3>Rules</h3>
+    <ul>
+      <li>Open and read every paper you cite &mdash; at minimum abstract, method, conclusion. The bibliographic data is verified; the <em>claims</em> you make about each paper are not.</li>
+      <li>Any number you quote from a paper must be checked in that paper, not taken from a search summary. Two repository URLs handed to us in this project turned out not to exist.</li>
+      <li>Never copy sentences. Paraphrase and cite. No promotional language. Every factual claim carries a citation.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> Positioning against ThermE &mdash; do not skip</h2>
+    <p><code>lu2026therme</code> is the nearest work to ours and appeared recently. It must be cited in 5.3 <em>and</em> distinguished in the Research Gap, or a reviewer will raise it for us.</p>
+    <div class="scroll"><table>
+      <thead><tr><th></th><th>ThermE</th><th>This work</th></tr></thead>
+      <tbody>
+        <tr><td class="key">Predicts</td><td>thermal headroom (temperature)</td><td>sustained throughput (tok/s)</td></tr>
+        <tr><td class="key">When</td><td>at runtime, continuously</td><td>once, from a short cold-start window</td></tr>
+        <tr><td class="key">Purpose</td><td>schedule actions during serving</td><td>correct the figure a benchmark publishes</td></tr>
+        <tr><td class="key">Quantization</td><td>not varied</td><td>the central variable</td></tr>
+        <tr><td class="key">Placement</td><td>not addressed</td><td>the motivating decision</td></tr>
+        <tr><td class="key">Platform</td><td>edge SoCs, vLLM</td><td>consumer GPU, llama.cpp/GGUF</td></tr>
+      </tbody>
+    </table></div>
+    <p>One sentence in 5.3 and one in the gap is enough. Suggested framing: ThermE manages headroom while serving; we ask whether the performance figure a configuration is <em>advertised</em> with is attainable at all under sustained load, and show the answer depends on quantization level.</p>
+    <p class="note">ThermE also notes that vendor governors react only near throttling thresholds. That is adjacent to our finding that temperature saturates long before throughput stops falling. Acknowledge it rather than presenting ours as wholly new &mdash; our measurement is of a different quantity and is quantified (9&times;).</p>
+  </section>
+
+  <section>
+    <h2><span class="num">07</span> How the marks are earned</h2>
+    <div class="scroll"><table>
+      <thead><tr><th>Criterion</th><th class="n">Marks</th><th>What satisfies it here</th></tr></thead>
+      <tbody>
+        <tr><td>Quality / relevance of literature</td><td class="n">5</td><td>19 references, 2024&ndash;2026, peer-reviewed where available (ACM TIOT, ASPLOS), every one verified against the published record</td></tr>
+        <tr><td>Literature synthesis</td><td class="n">5</td><td>four themes, each grouping papers by a shared limitation; the comparison table; <strong>no paper-by-paper summaries</strong></td></tr>
+        <tr><td>Research gap</td><td class="n">5</td><td>four points, each supported by one of our measurements, plus explicit positioning against ThermE</td></tr>
+        <tr><td>RQ &amp; objectives</td><td class="n">3</td><td>already written &mdash; check the gap you write leads into them without contradiction</td></tr>
+        <tr><td>Expected contribution</td><td class="n">2</td><td>already stated in Methodology and Results</td></tr>
+        <tr><td>Paper quality (final)</td><td class="n">4</td><td>compiles cleanly, consistent terminology, all tables captioned and referenced, no broken citations</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">Marks are lost most often on synthesis, not on paper count. Fifteen well-grouped papers beat twenty summarised one by one.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">08</span> Overleaf and working rules</h2>
+    <ol>
+      <li><strong>Upload</strong> <code>paper/main.tex</code> and <code>paper/references.bib</code> from the repo. If the project was created from the instructor's template, do <em>not</em> overwrite its <code>main.tex</code> &mdash; paste section bodies into the template's sections and upload <code>references.bib</code> only.</li>
+      <li><strong>Project name:</strong> <code>[Grp12_23i-0728_23i-6001_thermally_mandated_offloading]</code></li>
+      <li><strong>Instructor as Editor:</strong> <code>basharat.hussain.v@isb.nu.edu.pk</code>, access kept for the whole project.</li>
+      <li><strong>One project, both authors.</strong> No personal copies.</li>
+      <li><strong>Only edit</strong> Literature Review, Research Gap and <code>references.bib</code>. Sections 7&ndash;9 are finished and cross-referenced.</li>
+      <li><strong>Commit as you go</strong> &mdash; git history is evidence of individual contribution.</li>
+      <li><strong>Add a row to <code>CONTRIBUTIONS.md</code></strong> each session. Every entry is currently Faheem's; either of us can be questioned on any part at the defence.</li>
+    </ol>
+    <h3>Before handing back, check</h3>
+    <ul>
+      <li>Document compiles in Overleaf with no errors and no <code>??</code> in place of citations.</li>
+      <li>Every new BibTeX entry is cited; every citation resolves.</li>
+      <li>Each of 5.1&ndash;5.4 ends with its required closing sentence.</li>
+      <li>The comparison table is captioned and referenced from the text.</li>
+      <li>Nothing you wrote contradicts the numbers in &sect;02.</li>
+      <li>The abstract's last line is still the GitHub link.</li>
+    </ul>
+  </section>
+
+  <footer>
+    Cloud Computing &mdash; 100-Day Research Assignment &middot; Group G12 &middot;
+    Faheem (23i-0728) and Irtaza Kazmi (23i-6001)
+  </footer>
+
+</div>
