@@ -112,58 +112,222 @@ sustain performance under continuous load, or connects that behaviour to the
 decision of where inference should run.
 
 \section{Methodology}
-\textit{[Written as planned work for Cutoff~1; convert to past tense after the
-experiments.]}
 
-\paragraph{Measurement protocol.} Each run cools the GPU to a defined cold start
-(below 60\,$^\circ$C), applies 15~minutes of continuous inference, then records
-15~minutes of idle
-recovery. Temperature, power, clock frequency and throttle status are sampled at
-20~Hz via NVML; throughput is recorded per request.
+The study proceeds in four stages: we reproduce the baseline to establish that
+our harness is faithful, characterise sustained-load behaviour that the baseline
+does not measure, formulate an estimator for the quantity the baseline reports
+incorrectly, and separate the contribution of its components by ablation.
 
-\paragraph{Mechanism.} Key quantization comparisons are repeated with the GPU clock
-held at a low fixed frequency on a cool device, to separate reduced compute from
-heat.
+\subsection{Baseline reproduction}
+We reproduce the accuracy results of Husom et al.~\cite{husom2025sustainable}
+using the authors' released inference and evaluation scripts without
+modification to prompts, scoring or protocol. Each configuration is evaluated on
+the authors' pre-sampled 200-prompt files with five repetitions
+(\mbox{1\,000} generations per cell) at temperature~0, matching their
+\texttt{exp.sh}. Accuracy is a property of the model, its quantization and the
+prompt, and is independent of the host device; it is therefore the appropriate
+axis on which to verify fidelity across differing hardware. Throughput, power
+and latency are \emph{not} compared to the published values, because the
+original study instruments a Raspberry~Pi~4 with an external hardware power
+meter whereas this work measures a discrete GPU through NVML.
 
-\paragraph{Predictor and policy.} A curve fitted to the first 60--90~s of each run
-predicts steady-state throughput and is validated against the full-length run.
-A placement policy using the predictor is compared with a constant-performance
-baseline and a temperature-triggered baseline.
+\subsection{Sustained-load measurement}
+Short benchmarks observe a device only in its cold, unthrottled state. To
+characterise behaviour under continuous service we define a three-phase
+protocol. Each run first idles until the GPU falls below a fixed cold-start
+threshold of $60\,^\circ$C, then applies 15~minutes of uninterrupted inference,
+then records 15~minutes of idle recovery. Device temperature, power draw, SM
+clock frequency and the NVML throttle-reason bitmask are sampled at 20~Hz, and
+decode throughput is recorded per request.
+
+Controlling the cold start is essential rather than cosmetic: an uncontrolled
+pilot that began at $88\,^\circ$C, already throttling, measured only half the
+degradation of an identical run started cold, because it never observed peak
+throughput. We also record the engine's CPU/GPU offload split, since a model
+that does not fit in VRAM is partially CPU-resident and occupies a different
+operating regime that must not be pooled with GPU-resident configurations.
+
+\subsection{Proposed estimator}
+Let $y(t)$ denote decode throughput at elapsed time $t$ under continuous load,
+and let $y_\infty$ denote its steady-state value. A short-window benchmark
+reports $\bar{y}_W$, the mean over an initial window of length $W$, as though it
+estimated $y_\infty$. On a thermally constrained device the two differ
+systematically.
+
+We instead model the observed decay as first-order,
+\begin{equation}
+y(t) \;=\; a + b\,e^{-t/\tau},
+\label{eq:decay}
+\end{equation}
+and report $\hat{y}_\infty = a$. For a fixed $\tau$, Eq.~\eqref{eq:decay} is
+linear in $(a,b)$, so the estimator grid-searches $\tau$ over $20$--$600$\,s and
+solves the two-parameter least-squares problem in closed form at each step,
+retaining the fit with the lowest residual sum of squares. The procedure is
+deterministic, adds no dependencies beyond the standard library, and completes
+in milliseconds, so it can run inside an existing benchmark harness rather than
+as a separate offline analysis.
+
+The estimator is deliberately decomposed into two independent components, so
+that their contributions can be attributed separately:
+\begin{description}
+  \item[A --- sustained measurement.] Extend the measurement window from $W$ to
+    a longer horizon $L$ and report the mean of its final 60\,s. This buys
+    accuracy with wall-clock time and requires no model.
+  \item[B --- decay extrapolation.] Fit Eq.~\eqref{eq:decay} and report its
+    asymptote instead of a window mean. This requires no additional measurement
+    time.
+\end{description}
+
+\subsection{Ablation design}
+Because the proposed method introduces two components, an improvement over the
+baseline does not by itself show which component is responsible. We therefore
+evaluate the four arms of Table~\ref{tab:arms}, all computed from the same raw
+telemetry so that the comparison is like-for-like:
+
+\begin{table}[h]
+\centering
+\caption{Ablation arms. $W=60$\,s, $L=300$\,s.}
+\label{tab:arms}
+\begin{tabular}{lll}
+\toprule
+Arm & Estimate of $y_\infty$ & Measurement cost \\
+\midrule
+Baseline & $\bar{y}_W$, mean of first $W$ & $W$ \\
+$+$A     & mean of final 60\,s of $L$ & $L$ \\
+$+$B     & $a$ from Eq.~\eqref{eq:decay} fitted on $[0,W]$ & $W$ \\
+$+$A$+$B & $a$ from Eq.~\eqref{eq:decay} fitted on $[0,L]$ & $L$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The baseline arm reproduces exactly what the original short-run protocol
+reports, so the original system remains available for comparison throughout.
+
+\subsection{Evaluation metrics}
+Ground truth $y_\infty$ is taken as the mean throughput after 700\,s of
+continuous load, by which point the device has reached thermal equilibrium.
+Estimator quality is reported as mean absolute percentage error
+\[
+\mathrm{MAPE} \;=\; \frac{1}{N}\sum_{i=1}^{N}
+\frac{\lvert \hat{y}_{\infty,i} - y_{\infty,i}\rvert}{y_{\infty,i}}\times 100,
+\]
+together with the worst-case error across configurations and the measurement
+cost in seconds, since an estimator that is accurate only after a long
+measurement is of limited practical value. Reproduction fidelity is assessed
+with a two-proportion $z$-test between our accuracy and the published value.
 
 \section{Experimental Setup}
+
+Table~\ref{tab:setup} lists the configuration as run.
+
 \begin{table}[h]
 \centering
-\caption{Planned experimental matrix.}
+\caption{Experimental configuration as run.}
+\label{tab:setup}
 \begin{tabular}{ll}
 \toprule
-Factor & Levels \\
+Factor & Value \\
 \midrule
-Model size   & 0.5B, 1.5B, 3B parameters (Qwen2.5 family) \\
-Quantization & Q4\_K\_M, Q8\_0, FP16 \\
-Hardware     & RTX 3050 Laptop (4\,GB), RTX 4070 Laptop (8\,GB) \\
-Runtime      & Ollama, NVML via \texttt{nvidia-ml-py} \\
-Repetitions  & 5 per configuration \\
+Device        & NVIDIA RTX 3050 Laptop GPU, 4\,GB, driver 581.83 \\
+Host          & Windows 11 (build 26200), Python 3.13.5 \\
+Serving       & Ollama 0.24.0 (llama.cpp, GGUF) \\
+Telemetry     & NVML via \texttt{nvidia-ml-py}, 20\,Hz \\
+Models        & Qwen2.5 0.5B and 1.5B Instruct \\
+Quantization  & Q4\_K\_M, Q8\_0, FP16 \\
+Datasets      & CommonsenseQA, TruthfulQA (200 prompts each) \\
+Repetitions   & 5 per accuracy cell (1\,000 generations) \\
+Sustained run & 15\,min load, 15\,min recovery, cold start $<60\,^\circ$C \\
 \bottomrule
 \end{tabular}
 \end{table}
 
+FP16 at 1.5B requires 3.7\,GB and does not fit alongside the KV cache in 4\,GB;
+Ollama reports a 23\,\%/77\,\% CPU/GPU split for it. Its accuracy remains valid,
+but its throughput belongs to a partially CPU-bound regime and is excluded from
+aggregate estimator error.
+
 \section{Results}
-\textit{[Preliminary: single runs on the RTX~3050; to be replaced by repeated
-measurements.]}
+
+\subsection{Baseline reproduction}
+Table~\ref{tab:repro} compares our accuracy against the published values. All
+four comparable cells agree: differences range from $-0.029$ to $+0.015$ and no
+difference is statistically significant.
 
 \begin{table}[h]
 \centering
-\caption{Preliminary peak and sustained throughput (RTX 3050 Laptop, single runs).}
-\begin{tabular}{lrrrr}
+\caption{Reproduction of accuracy against Husom et al., Table~8. Each cell is
+1\,000 generations.}
+\label{tab:repro}
+\begin{tabular}{llrrrr}
 \toprule
-Configuration & Peak (tok/s) & Sustained (tok/s) & Loss & Clock at steady state \\
+Model & Dataset & Paper & Ours & Diff & $p$ \\
 \midrule
-0.5B Q4 & 243.6 & 179.9 & 26.2\% & 1181 MHz \\
-1.5B Q4 & 115.8 &  66.2 & 42.9\% &  839 MHz \\
-1.5B Q8 &  95.4 &  66.8 & 30.0\% &  832 MHz \\
+Qwen2.5-0.5B-Q4\_K\_M & CommonsenseQA & 0.32 & 0.291 & $-0.029$ & 0.420 \\
+Qwen2.5-1.5B-Q4\_K\_M & CommonsenseQA & 0.62 & 0.593 & $-0.027$ & 0.474 \\
+Qwen2.5-0.5B-Q4\_K\_M & TruthfulQA    & 0.26 & 0.275 & $+0.015$ & 0.660 \\
+Qwen2.5-1.5B-Q4\_K\_M & TruthfulQA    & 0.24 & 0.249 & $+0.009$ & 0.786 \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+The original study reports no Q8\_0 or FP16 results for the 1.5B model, as
+neither fits on its 4\,GB Raspberry~Pi. Measuring that region gives
+CommonsenseQA accuracies of 0.698 (Q8\_0) and 0.705 (FP16) against 0.593 for
+Q4\_K\_M: a 10.5-point gain from Q4 to Q8 that then plateaus.
+
+\subsection{Sustained-load behaviour}
+Under continuous load every GPU-resident configuration degrades substantially
+(Table~\ref{tab:sustained}). Device temperature is a poor indicator of this:
+it reaches equilibrium roughly nine times faster than throughput does, so the
+device appears stable throughout the period in which most performance is lost.
+
+\begin{table}[h]
+\centering
+\caption{Peak and sustained throughput (RTX 3050 Laptop, 15\,min load).}
+\label{tab:sustained}
+\begin{tabular}{lrrrr}
+\toprule
+Configuration & Peak (tok/s) & Sustained (tok/s) & Loss & Steady clock \\
+\midrule
+0.5B Q4 & 243.6 & 179.9 & 26.2\,\% & 1181\,MHz \\
+1.5B Q4 & 115.8 &  66.2 & 42.9\,\% &  839\,MHz \\
+1.5B Q8 &  95.4 &  66.8 & 30.0\,\% &  832\,MHz \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Notably, Q4 and Q8 converge to a common floor: the 21\,\% cold-start throughput
+advantage of Q4 over Q8 is absent at thermal equilibrium, so the speed benefit
+of aggressive quantization does not survive sustained operation even though its
+accuracy cost does.
+
+\subsection{Estimator evaluation and ablation}
+Table~\ref{tab:ablation} reports estimator error over the three GPU-resident
+configurations. The short-window baseline overstates sustained throughput by
+51\,\% on average and by 75\,\% in the worst case. Both proposed components
+reduce this, and they are not redundant: component~B alone matches the accuracy
+of component~A at one-fifth of the measurement cost, and combining them halves
+the error again.
+
+\begin{table}[h]
+\centering
+\caption{Ablation. Error is against measured steady state; FP16 excluded as
+partially CPU-bound.}
+\label{tab:ablation}
+\begin{tabular}{lrrr}
+\toprule
+Arm & MAPE & Worst case & Cost \\
+\midrule
+Baseline & 51.1\,\% & 75.0\,\% &  60\,s \\
+$+$A     & 18.1\,\% & 27.7\,\% & 300\,s \\
+$+$B     & 17.9\,\% & 39.2\,\% &  60\,s \\
+$+$A$+$B & \textbf{10.5\,\%} & 23.3\,\% & 300\,s \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The improvement is confined to performance characterisation: the method does
+not alter model outputs, so accuracy is unchanged from the reproduced baseline.
 
 \section{Discussion}
 % To be written after full results.

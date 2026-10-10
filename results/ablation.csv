@@ -1,0 +1,17 @@
+config,tag,method,predicted_tok_s,actual_tok_s,abs_pct_error,measurement_cost_s
+qwen2.5-0.5b-q4_K_M,s05,baseline,243.6,179.9,35.4,60
+qwen2.5-0.5b-q4_K_M,s05,+A,188.8,179.9,4.9,300
+qwen2.5-0.5b-q4_K_M,s05,+B,175.4,179.9,2.5,60
+qwen2.5-0.5b-q4_K_M,s05,+A+B,179.9,179.9,0.0,300
+qwen2.5-1.5b-q4_K_M,q4,baseline,115.8,66.2,75.0,60
+qwen2.5-1.5b-q4_K_M,q4,+A,84.5,66.2,27.7,300
+qwen2.5-1.5b-q4_K_M,q4,+B,58.3,66.2,11.9,60
+qwen2.5-1.5b-q4_K_M,q4,+A+B,81.6,66.2,23.3,300
+qwen2.5-1.5b-q8_0,q8,baseline,95.4,66.8,42.9,60
+qwen2.5-1.5b-q8_0,q8,+A,81.2,66.8,21.6,300
+qwen2.5-1.5b-q8_0,q8,+B,93.0,66.8,39.2,60
+qwen2.5-1.5b-q8_0,q8,+A+B,61.3,66.8,8.1,300
+qwen2.5-1.5b-fp16 (CPU-offloaded),fp16,baseline,25.3,24.6,3.1,60
+qwen2.5-1.5b-fp16 (CPU-offloaded),fp16,+A,22.1,24.6,10.0,300
+qwen2.5-1.5b-fp16 (CPU-offloaded),fp16,+B,24.7,24.6,0.7,60
+qwen2.5-1.5b-fp16 (CPU-offloaded),fp16,+A+B,17.8,24.6,27.5,300

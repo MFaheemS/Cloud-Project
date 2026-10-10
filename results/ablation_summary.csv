@@ -1,0 +1,5 @@
+method,mape_pct,max_err_pct,measurement_cost_s
+baseline,51.1,75.0,60
++A,18.1,27.7,300
++B,17.9,39.2,60
++A+B,10.5,23.3,300
