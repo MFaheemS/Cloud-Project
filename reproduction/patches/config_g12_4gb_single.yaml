@@ -1,0 +1,30 @@
+# G12 reproduction config: Bench360 on a 4 GB consumer laptop GPU.
+#
+# Bench360's own configs (RQ1-RQ2c) assume a 24 GB VRAM budget and 7B-32B
+# models served by vLLM/TGI/SGLang/LMDeploy in Docker. None of those fit on an
+# RTX 3050 Laptop (4 GB), so this config exercises the same pipeline through an
+# Ollama (llama.cpp / GGUF) backend added for this reproduction.
+#
+# Run:
+#   python launch_benchmark.py experiments/config_g12_4gb_single.yaml \
+#       --script_path benchmark/launch_engine_ollama.bat
+
+backend: ollama
+
+# NOTE: model_name must be set explicitly. Bench360 otherwise derives it from
+# hf_model.name, and Ollama tags contain a ':' — on NTFS that opens an
+# alternate data stream, so every result CSV is written into a hidden stream
+# and the visible file is 0 bytes while the run still reports success.
+model_name: qwen2.5-1.5b-instruct-q4_K_M
+
+hf_model:
+  - name: qwen2.5:1.5b-instruct-q4_K_M
+    top_p: 0.9
+    max_tokens: 128
+    temperature: 0.1
+
+task: mmlu
+
+scenario: single
+
+samples: 20

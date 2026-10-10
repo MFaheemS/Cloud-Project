@@ -1,0 +1,31 @@
+diff --git a/src/inference.py b/src/inference.py
+index 8faaeef..f70cae1 100644
+--- a/src/inference.py
++++ b/src/inference.py
+@@ -119,8 +119,14 @@ def main():
+                         formatted_prompt = process_prompt(dataset_type, prompt, instruction)
+                         print(formatted_prompt)
+ 
+-                        signal.signal(signal.SIGALRM, timeout_handler)
+-                        signal.alarm(timeout)
++                        # Portability (G12 reproduction): signal.SIGALRM /
++                        # signal.alarm are Unix-only. On Windows they do not
++                        # exist, so the per-prompt timeout is skipped rather
++                        # than crashing. Behaviour on Linux is unchanged.
++                        _has_alarm = hasattr(signal, "SIGALRM")
++                        if _has_alarm:
++                            signal.signal(signal.SIGALRM, timeout_handler)
++                            signal.alarm(timeout)
+                         try:
+                             # Uncomment below for chat API
+                             # response = ollama.chat(model=model_name, messages=[{'role': 'user', 'content': formatted_prompt}])
+@@ -149,7 +155,8 @@ def main():
+                             print(f"Timeout for prompt {counter} for model {model_name} at time {time.time()}")
+                             print("========================================================")
+                         finally:
+-                            signal.alarm(0)
++                            if _has_alarm:
++                                signal.alarm(0)
+                         
+                     counter += 1
+ if __name__ == "__main__":

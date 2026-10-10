@@ -1,0 +1,9 @@
+model,dataset,generations,accuracy_ours,accuracy_paper,difference,status
+qwen2.5:0.5b-instruct-q4_K_M,commonsenseqa,1000,0.291,0.32,-0.029,reproduction
+qwen2.5:1.5b-instruct-q4_K_M,commonsenseqa,1000,0.593,0.62,-0.027,reproduction
+qwen2.5:1.5b-instruct-q8_0,commonsenseqa,1000,0.698,,,new data point (not in Table 8)
+qwen2.5:1.5b-instruct-fp16,commonsenseqa,1000,0.705,,,new data point (not in Table 8)
+qwen2.5:0.5b-instruct-q4_K_M,truthfulqa,1000,0.275,0.26,0.015,reproduction
+qwen2.5:1.5b-instruct-q4_K_M,truthfulqa,1000,0.249,0.24,0.009,reproduction
+qwen2.5:1.5b-instruct-q8_0,truthfulqa,1000,0.239,,,new data point (not in Table 8)
+qwen2.5:1.5b-instruct-fp16,truthfulqa,1000,0.245,,,new data point (not in Table 8)

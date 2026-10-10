@@ -1,0 +1,76 @@
+diff --git a/benchmark/inference_engine_client.py b/benchmark/inference_engine_client.py
+index ea4a789..59b8a83 100644
+--- a/benchmark/inference_engine_client.py
++++ b/benchmark/inference_engine_client.py
+@@ -19,6 +19,8 @@ class InferenceEngineClient:
+         self._launcher_proc = None
+         self.model = None
+         self.NAME = "bench360_inference_engine"
++        # Set once a backend rejects a batched prompt array (see completion()).
++        self._prompt_array_unsupported = False
+ 
+     
+ 
+@@ -46,6 +48,14 @@ class InferenceEngineClient:
+             f"--model={model}",
+             f"--name={self.NAME}"
+         ]
++        # Portability fix (G12 reproduction): the upstream launcher is a POSIX
++        # shell script and is spawned directly. On Windows, CreateProcess cannot
++        # execute .bat/.cmd files from a list-form Popen, so route them through
++        # cmd.exe. No effect on Linux, where the original path is unchanged.
++        if os.name == "nt" and script_path.lower().endswith((".bat", ".cmd")):
++            # cmd.exe treats '/' as a switch prefix, so the script path must use
++            # backslashes or it is parsed as an option rather than a filename.
++            cmd = ["cmd", "/c", os.path.normpath(script_path)] + cmd[1:]
+         self._launcher_proc = subprocess.Popen(
+             cmd,
+             stdout=subprocess.PIPE,          # ⟵ was DEVNULL
+@@ -107,14 +117,39 @@ class InferenceEngineClient:
+         model = model
+         is_batch = isinstance(prompt, (list, tuple))
+ 
+-        resp = self.client.completions.create(
+-            model=self.model,
+-            prompt=prompt,
+-            temperature=temperature,
+-            max_tokens=max_tokens,
+-            top_p=top_p,
+-            stream=stream,
+-        )
++        # Backend capability shim (G12 reproduction): vLLM/TGI/SGLang accept a
++        # list of prompts in one /v1/completions call, but llama.cpp-based
++        # servers (Ollama) only accept a single string and reject arrays with
++        # HTTP 400. Fall back to sequential calls so the same harness, metrics
++        # and task code run unmodified on a low-VRAM consumer GPU.
++        if is_batch and not stream and self._prompt_array_unsupported:
++            texts = []
++            for p in prompt:
++                r = self.client.completions.create(
++                    model=self.model, prompt=p, temperature=temperature,
++                    max_tokens=max_tokens, top_p=top_p, stream=False,
++                )
++                texts.append(r.choices[0].text)
++            return texts
++
++        try:
++            resp = self.client.completions.create(
++                model=self.model,
++                prompt=prompt,
++                temperature=temperature,
++                max_tokens=max_tokens,
++                top_p=top_p,
++                stream=stream,
++            )
++        except Exception as e:
++            if is_batch and not stream and "unmarshal array" in str(e):
++                # Remember, then retry this call sequentially.
++                self._prompt_array_unsupported = True
++                return self.completion(
++                    prompt, model=model, temperature=temperature,
++                    max_tokens=max_tokens, top_p=top_p, stream=stream,
++                )
++            raise
+ 
+         if stream:
+             return resp

@@ -1,0 +1,5 @@
+model,dataset,repeat,accuracy,correct,total,wall_seconds
+qwen2.5:1.5b-instruct-q4_K_M,commonsenseqa,5,0.593,593,1000,202.0
+qwen2.5:1.5b-instruct-q8_0,commonsenseqa,5,0.698,698,1000,231.3
+qwen2.5:1.5b-instruct-fp16,commonsenseqa,5,0.705,705,1000,441.4
+qwen2.5:1.5b-instruct-fp16,truthfulqa,5,0.245,,,920.1
