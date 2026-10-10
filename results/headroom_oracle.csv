@@ -1,0 +1,4 @@
+config,actual,w60_err_pct,w300_err_pct,oracle_err_pct
+0.5b-q4,179.9,2.5,0.0,1.1
+1.5b-q4,66.2,11.9,23.3,3.6
+1.5b-q8,66.8,39.2,8.1,6.7
